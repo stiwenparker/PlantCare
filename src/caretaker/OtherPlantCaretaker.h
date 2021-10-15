@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdio.h>
-
 #include "../interface/WindowDeviceInterface.h"
 #include "../utility/Utilities.h"
 

@@ -1,7 +1,7 @@
-#include "MoistureSensor.h"
-#include "SunlightSensor.h"
-#include "PlantCaretaker.h"
-#include "OtherPlantCaretaker.h"
+#include "./sensors/MoistureSensor.h"
+#include "./sensors/SunlightSensor.h"
+#include "./caretaker/PlantCaretaker.h"
+#include "./caretaker/OtherPlantCaretaker.h"
 
 #include <thread>
 

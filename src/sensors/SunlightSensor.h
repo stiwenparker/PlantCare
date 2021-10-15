@@ -37,7 +37,7 @@ public:
             std::unique_lock<std::mutex> lock(mtx);
             const auto sunlight = isSunlight();
             updateState(sunlight);
-            std::cout << getCurrentTime() << " Sun shines: " << std::boolalpha << sunlight << std::endl;
+            std::cout << getCurrentTime() << " sun shines: " << std::boolalpha << sunlight << std::endl;
 
             if (isTooMuchSunlight(sunlight)) {
                 for (auto p : devices)
