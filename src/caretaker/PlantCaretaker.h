@@ -1,8 +1,8 @@
 #pragma once
 
-#include "WaterDeviceInterface.h"
-#include "WindowDeviceInterface.h"
-#include "Utilities.h"
+#include "../interface/WaterDeviceInterface.h"
+#include "../interface/WindowDeviceInterface.h"
+#include "../utility/Utilities.h"
 
 class PlantCaretaker : public WaterDeviceInterface, public WindowDeviceInterface {
 	bool areWindowBlindsOpened = true;

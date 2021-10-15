@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 
-#include "WindowDeviceInterface.h"
-#include "Utilities.h"
+#include "../interface/WindowDeviceInterface.h"
+#include "../utility/Utilities.h"
 
 //example for a plant that doesn't need care about water changes like cactus
 

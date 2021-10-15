@@ -5,7 +5,7 @@
 #include <set>
 #include <random>
 
-#include "WaterDeviceInterface.h"
+#include "../interface/WaterDeviceInterface.h"
 
 class MoistureSensor {
 	const std::chrono::seconds sleepTime;

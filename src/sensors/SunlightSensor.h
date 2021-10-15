@@ -6,8 +6,8 @@
 #include <mutex>
 #include <iostream>
 
-#include "WindowDeviceInterface.h"
-#include "Utilities.h"
+#include "../interface/WindowDeviceInterface.h"
+#include "../utility/Utilities.h"
 
 class SunlightSensor {
     using TimePoint = decltype(std::chrono::system_clock::now());
