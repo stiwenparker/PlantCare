@@ -10,85 +10,92 @@
 #include "../utility/Utilities.h"
 
 class SunlightSensor {
-    using TimePoint = decltype(std::chrono::system_clock::now());
+    private:
+        using TimePoint = decltype(std::chrono::system_clock::now());
+        std::mutex& mtx;
+        std::set<WindowDeviceInterface*> devices;
+        std::optional<TimePoint> sunlightOnFrom;
+        std::optional<TimePoint> sunlightOffFrom;
+        const std::chrono::seconds sleepTime;
+        const int threshold = 2;
+        bool sensorOn = true;
 
-    const std::chrono::seconds sleepTime;
-    std::mutex& mtx;
-    std::set<WindowDeviceInterface*> devices;
+    public:
+        SunlightSensor(const std::chrono::seconds sleepTime, std::mutex& mtx)
+            : sleepTime{ sleepTime }
+            , mtx{ mtx }
+        {
+        }
 
-    std::optional<TimePoint> sunlightOnFrom;
-    std::optional<TimePoint> sunlightOffFrom;
+        void subscribe(WindowDeviceInterface& device) {
+            devices.insert(&device);
+        }
 
-    const int threshold = 2;
-    bool sensorOn = true;
+        void operator()() {
+            for (;;) {
+                std::unique_lock<std::mutex> lock(mtx);
+                const auto sunlight = isSunlight();
+                updateState(sunlight);
+                std::cout << getFormattedCurrentTime() << " sun shines: " << std::boolalpha << sunlight << std::endl;
 
-public:
-    SunlightSensor(const std::chrono::seconds sleepTime, std::mutex& mtx)
-        : sleepTime{ sleepTime }
-        , mtx{ mtx }
-    {
-    }
+                if (isTooMuchSunlight(sunlight)) {
+                    for (auto p : devices)
+                        p->closeWindowBlinds();
+                    sensorOn = false;
+                } else if (isTooLittleSunlight(sunlight)) {
+                    for (auto p : devices)
+                        p->openWindowBlinds();
+                    sensorOn = true;
+                }
 
-    void subscribe(WindowDeviceInterface& device) {
-        devices.insert(&device);
-    }
-    void operator()() {
-        for (;;) {
-            std::unique_lock<std::mutex> lock(mtx);
-            const auto sunlight = isSunlight();
-            updateState(sunlight);
-            std::cout << getCurrentTime() << " sun shines: " << std::boolalpha << sunlight << std::endl;
-
-            if (isTooMuchSunlight(sunlight)) {
-                for (auto p : devices)
-                    p->closeWindowBlinds();
-                sensorOn = false;
+                lock.unlock();
+                std::this_thread::sleep_for(sleepTime);
             }
-            else if (isTooLittleSunlight(sunlight)) {
-                for (auto p : devices)
-                    p->openWindowBlinds();
-                sensorOn = true;
+        }
+
+    private:
+        void updateState(const bool sunlight) {
+            const auto currentTime = std::chrono::system_clock::now();
+
+            if (sunlight and sensorOn) {
+                sunlightOnFrom = sunlightOnFrom ? *sunlightOnFrom : currentTime;
+                sunlightOffFrom = std::nullopt;
+            } else if (not sunlight) {
+                sunlightOffFrom = sunlightOffFrom ? *sunlightOffFrom : currentTime;
+                sunlightOnFrom = std::nullopt;
+            }
+        }
+
+        bool isTooMuchSunlight(const bool sunlight) {
+            if (sunlight) {
+                const auto timeNow = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsedSeconds = timeNow - (*sunlightOnFrom);
+                
+                return elapsedSeconds.count() > threshold;
             }
 
-            lock.unlock();
-            std::this_thread::sleep_for(sleepTime);
+            return false;
         }
-    }
 
-private:
-    void updateState(const bool sunlight) {
-        const auto currentTime = std::chrono::system_clock::now();
-        if (sunlight and sensorOn) {
-            sunlightOnFrom = sunlightOnFrom ? *sunlightOnFrom : currentTime;
-            sunlightOffFrom = std::nullopt;
+        bool isTooLittleSunlight(const bool sunlight) {
+            if (not sunlight) {
+                const auto timeNow = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsedSeconds = timeNow - (*sunlightOffFrom);
+                
+                return elapsedSeconds.count() > threshold;
+            }
+
+            return false;
         }
-        else if (not sunlight) {
-            sunlightOffFrom = sunlightOffFrom ? *sunlightOffFrom : currentTime;
-            sunlightOnFrom = std::nullopt;
+
+        bool isSunlight() const {
+            static bool sunShines = false;
+            static std::mt19937 generator;
+            auto prob = std::uniform_int_distribution<int>(1, 100)(generator);
+            
+            if (prob >= 80)
+                sunShines = !sunShines;
+
+            return sunShines;
         }
-    }
-    bool isTooMuchSunlight(const bool sunlight) {
-        if (sunlight) {
-            const auto timeNow = std::chrono::system_clock::now();
-            std::chrono::duration<double> elapsedSeconds = timeNow - (*sunlightOnFrom);
-            return elapsedSeconds.count() > threshold;
-        }
-        return false;
-    }
-    bool isTooLittleSunlight(const bool sunlight) {
-        if (not sunlight) {
-            const auto timeNow = std::chrono::system_clock::now();
-            std::chrono::duration<double> elapsedSeconds = timeNow - (*sunlightOffFrom);
-            return elapsedSeconds.count() > threshold;
-        }
-        return false;
-    }
-    bool isSunlight() const {
-        static bool sunShines = false;
-        static std::mt19937 generator;
-        auto prob = std::uniform_int_distribution<int>(1, 100)(generator);
-        if (prob >= 80)
-            sunShines = !sunShines;
-        return sunShines;
-    }
 };

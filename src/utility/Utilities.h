@@ -3,14 +3,14 @@
 #include <string>
 #include <time.h>
 
-std::string getCurrentTime() {
+std::string getFormattedCurrentTime() {
     struct tm newtime;
     time_t now = time(0);
     localtime_s(&newtime, &now);
-
     std::string result = "[";
 
     auto hour = newtime.tm_hour;
+
     if(hour < 10)
         result += '0' + std::to_string(newtime.tm_hour);
     else 
@@ -19,6 +19,7 @@ std::string getCurrentTime() {
     result += ":";
 
     auto minute = newtime.tm_min;
+
     if (minute < 10)
         result += '0' + std::to_string(newtime.tm_min);
     else
